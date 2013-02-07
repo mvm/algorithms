@@ -27,6 +27,12 @@ class Graph
     }
     return "Graph(" + @vertex.to_s + ", [" + edge_s.join(", ") + "])"
   end
+  def vertex
+    @vertex
+  end
+  def edges
+    @edges
+  end
 end
 
 
