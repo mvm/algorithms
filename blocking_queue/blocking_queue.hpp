@@ -2,6 +2,7 @@
 #define _BLOCKING_QUEUE_HPP
 
 #include <iostream>
+#include <pthread.h>
 
 template <typename T> class blocking_queue {
 private:
@@ -10,6 +11,7 @@ private:
     unsigned long last;
     unsigned long size;
     unsigned long free;
+    pthread_mutex_t mutex;
 
     unsigned long inline idx(unsigned long _idx) {
         return (_idx % this->size);
@@ -22,15 +24,18 @@ public:
         this->free = size;
         this->head = 0;
         this->last = 0;
+        pthread_mutex_init(&this->mutex, NULL);
     }
 
     ~blocking_queue() {
         delete this->data;
+        pthread_mutex_destroy(&this->mutex);
     }
 
     unsigned long take(T *dst, unsigned long n) {
         unsigned long taken = 0;
 
+        pthread_mutex_lock(&this->mutex);
         while(taken < n && free < size) {
             head = idx(head);
             *dst = data[head];
@@ -39,6 +44,7 @@ public:
             free++;
             head++;
         }
+        pthread_mutex_unlock(&this->mutex);
 
         return taken;
     }
@@ -46,6 +52,7 @@ public:
     unsigned long put(T *src, unsigned long n) {
         unsigned long written = 0;
 
+        pthread_mutex_lock(&this->mutex);
         for(; free > 0 && written < n; free--) {
             last = idx(last);
             data[last] = *src;
@@ -53,11 +60,13 @@ public:
             written++;
             last++;
         }
+        pthread_mutex_unlock(&this->mutex);
 
         return written;
     }
 
     unsigned long put_one(T x) {
+        pthread_mutex_lock(&this->mutex);
         if(this->free == 0)
             return 0;
 
@@ -66,10 +75,12 @@ public:
         data[last] = x;
         last++;
         last = idx(last);
+        pthread_mutex_unlock(&this->mutex);
         return 1;
     }
 
     void print(std::ostream &o) {
+        pthread_mutex_lock(&this->mutex);
         o << "[";
         unsigned long h = 0;
         while(h < size - free) {
@@ -80,6 +91,7 @@ public:
             h++;
         }
         o << "]";
+        pthread_mutex_unlock(&this->mutex);
     }
 };
 
