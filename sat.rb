@@ -129,6 +129,6 @@ def solve(expr, sust={})
 end
 
 expr = And.new(Or.new(Un.new(:x), Not.new(:z)),Or.new(Not.new(:x), Un.new(:y)), Or.new(Un.new(:y)))
-p expr
+p expr.to_s
 p solve(expr)
 
